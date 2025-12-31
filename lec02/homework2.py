@@ -4,6 +4,19 @@ that method, type `help homework2.arithmetic`.
 '''
 
 def arithmetic(x, y):
+
+    if isinstance(y, str):
+        if isinstance(x, str):
+            return x + y
+        elif isinstance(x, float):
+            return str(x) + y
+
+    elif isinstance(y, float):
+        if isinstance(x, str):
+            return x * int(y)
+        elif isinstance(x, float):
+            return x * y
+
     """
     Modify this code so that it performs one of four possible functions, 
     as specified in the following table:
@@ -12,5 +25,6 @@ def arithmetic(x, y):
     isinstance(y,str)   return x+y         return str(x)+y
     isinstance(y,float) return x*int(y)    return x*y
     """
-    return 0
+    
+
 
