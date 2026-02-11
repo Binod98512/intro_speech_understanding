@@ -1,54 +1,71 @@
 import numpy as np
 
 def voiced_excitation(duration, F0, Fs):
-    '''
-    Create voiced speeech excitation.
-    
-    @param:
-    duration (scalar) - length of the excitation, in samples
-    F0 (scalar) - pitch frequency, in Hertz
-    Fs (scalar) - sampling frequency, in samples/second
-    
-    @returns:
-    excitation (np.ndarray) - the excitation signal, such that
-      excitation[n] = -1 if n is an integer multiple of int(np.round(Fs/F0))
-      excitation[n] = 0 otherwise
-    '''
-    raise RuntimeError("You need to write this part!")
+    """
+    Create voiced speech excitation (impulse train).
+    """
+    T0 = int(np.round(Fs / F0))   # pitch period in samples
+    excitation = np.zeros(duration)
+    excitation[::T0] = -1
+    return excitation
+
 
 def resonator(x, F, BW, Fs):
-    '''
-    Generate the output of a resonator.
-    
-    @param:
-    x (np.ndarray(N)) - the excitation signal
-    F (scalar) - resonant frequency, in Hertz
-    BW (scalar) - resonant bandwidth, in Hertz
-    Fs (scalar) - sampling frequency, in samples/second
-    
-    @returns:
-    y (np.ndarray(N)) - resonant output
-    '''
-    raise RuntimeError("You need to write this part!")
+    """
+    Generate output of a second-order resonator (formant filter).
+    """
+    N = len(x)
+    y = np.zeros(N)
 
-def synthesize_vowel(duration,F0,F1,F2,F3,F4,BW1,BW2,BW3,BW4,Fs):
-    '''
-    Synthesize a vowel.
-    
-    @param:
-    duration (scalar) - duration in samples
-    F0 (scalar) - pitch frequency in Hertz
-    F1 (scalar) - first formant frequency in Hertz
-    F2 (scalar) - second formant frequency in Hertz
-    F3 (scalar) - third formant frequency in Hertz
-    F4 (scalar) - fourth formant frequency in Hertz
-    BW1 (scalar) - first formant bandwidth in Hertz
-    BW2 (scalar) - second formant bandwidth in Hertz
-    BW3 (scalar) - third formant bandwidth in Hertz
-    BW4 (scalar) - fourth formant bandwidth in Hertz
-    Fs (scalar) - sampling frequency in samples/second
-    
-    @returns:
-    speech (np.ndarray(samples)) - synthesized vowel
-    '''
-    raise RuntimeError("You need to write this part!")
+    r = np.exp(-np.pi * BW / Fs)
+    theta = 2 * np.pi * F / Fs
+
+    a1 = 2 * r * np.cos(theta)
+    a2 = -r**2
+
+    for n in range(N):
+        y[n] = x[n]
+        if n >= 1:
+            y[n] += a1 * y[n-1]
+        if n >= 2:
+            y[n] += a2 * y[n-2]
+
+    return y
+
+
+def synthesize_vowel(duration, F0,
+                     F1, F2, F3, F4,
+                     BW1, BW2, BW3, BW4,
+                     Fs):
+    """
+    Synthesize vowel using source-filter model.
+    """
+
+    # Generate excitation
+    excitation = voiced_excitation(duration, F0, Fs)
+
+    # Cascade formant resonators
+    y1 = resonator(excitation, F1, BW1, Fs)
+    y2 = resonator(y1, F2, BW2, Fs)
+    y3 = resonator(y2, F3, BW3, Fs)
+    speech = resonator(y3, F4, BW4, Fs)
+
+    return speech
+
+
+# ===== Example Usage =====
+if __name__ == "__main__":
+    Fs = 8000
+    duration = 8000  # 1 second
+    F0 = 100
+
+    # Example vowel (/a/)
+    F1, F2, F3, F4 = 730, 1090, 2440, 3400
+    BW1, BW2, BW3, BW4 = 80, 90, 120, 200
+
+    speech = synthesize_vowel(duration, F0,
+                              F1, F2, F3, F4,
+                              BW1, BW2, BW3, BW4,
+                              Fs)
+
+    print("Synthesis complete. Signal length:", len(speech))
