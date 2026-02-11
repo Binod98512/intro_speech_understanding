@@ -35,6 +35,7 @@ def spectral_analysis(x, Fs):
     '''
     Find the three loudest frequencies in x.
     '''
+
     N = len(x)
 
     # Compute DFT using FFT
